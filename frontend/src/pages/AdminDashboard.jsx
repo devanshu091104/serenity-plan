@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { getAdminDashboard } from "../api/admin.api";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const EMPTY_DASHBOARD = {
   users: {
@@ -191,186 +191,122 @@ export default function AdminDashboard() {
   ======================================================= */
 
   const fetchDashboard = useCallback(
-    async (isRefresh = false) => {
-      try {
-        if (isRefresh) {
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
-
-        setError("");
-
-        const token = getToken();
-
-        /* -----------------------------------------------
-           TOKEN CHECK
-        ------------------------------------------------ */
-
-        if (!token) {
-          clearAuthAndRedirect();
-          return;
-        }
-
-        /* -----------------------------------------------
-           API REQUEST
-        ------------------------------------------------ */
-
-        const response = await fetch(
-          `${API_URL}/admin/dashboard`,
-          {
-            method: "GET",
-
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-
-            cache: "no-store",
-          }
-        );
-
-        const data = await response.json();
-
-        /* -----------------------------------------------
-           INVALID / EXPIRED TOKEN
-        ------------------------------------------------ */
-
-        if (response.status === 401) {
-          clearAuthAndRedirect();
-          return;
-        }
-
-        /* -----------------------------------------------
-           ADMIN ACCESS DENIED
-        ------------------------------------------------ */
-
-        if (response.status === 403) {
-          setError(
-            data.message ||
-              "You are not authorized to access the admin dashboard."
-          );
-
-          return;
-        }
-
-        /* -----------------------------------------------
-           OTHER ERROR
-        ------------------------------------------------ */
-
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.message ||
-              "Failed to load dashboard."
-          );
-        }
-
-        /* -----------------------------------------------
-           BACKEND RESPONSE
-        ------------------------------------------------ */
-
-        const serverDashboard =
-          data.dashboard || {};
-
-        setDashboard({
-          users: {
-            total: Number(
-              serverDashboard.users?.total || 0
-            ),
-
-            active: Number(
-              serverDashboard.users?.active || 0
-            ),
-          },
-
-          trips: {
-            total: Number(
-              serverDashboard.trips?.total || 0
-            ),
-
-            published: Number(
-              serverDashboard.trips?.published || 0
-            ),
-          },
-
-          destinations: {
-            total: Number(
-              serverDashboard.destinations
-                ?.total || 0
-            ),
-          },
-
-          bookings: {
-            total: Number(
-              serverDashboard.bookings
-                ?.total || 0
-            ),
-
-            pending: Number(
-              serverDashboard.bookings
-                ?.pending || 0
-            ),
-
-            confirmed: Number(
-              serverDashboard.bookings
-                ?.confirmed || 0
-            ),
-          },
-
-          inquiries: {
-            total: Number(
-              serverDashboard.inquiries
-                ?.total || 0
-            ),
-
-            new: Number(
-              serverDashboard.inquiries
-                ?.new || 0
-            ),
-          },
-
-          revenue: {
-            total: Number(
-              serverDashboard.revenue
-                ?.total || 0
-            ),
-
-            currency:
-              serverDashboard.revenue
-                ?.currency || "INR",
-          },
-
-          recentBookings:
-            Array.isArray(
-              serverDashboard.recentBookings
-            )
-              ? serverDashboard.recentBookings
-              : [],
-
-          recentInquiries:
-            Array.isArray(
-              serverDashboard.recentInquiries
-            )
-              ? serverDashboard.recentInquiries
-              : [],
-        });
-      } catch (err) {
-        console.error(
-          "Admin Dashboard Error:",
-          err
-        );
-
-        setError(
-          err.message ||
-            "Unable to load dashboard."
-        );
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+  async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    },
-    []
-  );
+
+      setError("");
+
+      const token = getToken();
+
+      if (!token) {
+        clearAuthAndRedirect();
+        return;
+      }
+
+      const response = await getAdminDashboard();
+      const data = response.data;
+
+      if (!data?.success) {
+        throw new Error(
+          data?.message || "Failed to load dashboard."
+        );
+      }
+
+      const serverDashboard = data.dashboard || {};
+
+      setDashboard({
+        users: {
+          total: Number(serverDashboard.users?.total || 0),
+          active: Number(serverDashboard.users?.active || 0),
+        },
+
+        trips: {
+          total: Number(serverDashboard.trips?.total || 0),
+          published: Number(
+            serverDashboard.trips?.published || 0
+          ),
+        },
+
+        destinations: {
+          total: Number(
+            serverDashboard.destinations?.total || 0
+          ),
+        },
+
+        bookings: {
+          total: Number(
+            serverDashboard.bookings?.total || 0
+          ),
+          pending: Number(
+            serverDashboard.bookings?.pending || 0
+          ),
+          confirmed: Number(
+            serverDashboard.bookings?.confirmed || 0
+          ),
+        },
+
+        inquiries: {
+          total: Number(
+            serverDashboard.inquiries?.total || 0
+          ),
+          new: Number(
+            serverDashboard.inquiries?.new || 0
+          ),
+        },
+
+        revenue: {
+          total: Number(
+            serverDashboard.revenue?.total || 0
+          ),
+          currency:
+            serverDashboard.revenue?.currency || "INR",
+        },
+
+        recentBookings: Array.isArray(
+          serverDashboard.recentBookings
+        )
+          ? serverDashboard.recentBookings
+          : [],
+
+        recentInquiries: Array.isArray(
+          serverDashboard.recentInquiries
+        )
+          ? serverDashboard.recentInquiries
+          : [],
+      });
+    } catch (err) {
+      console.error("Admin Dashboard Error:", err);
+
+      if (err.response?.status === 401) {
+        clearAuthAndRedirect();
+        return;
+      }
+
+      if (err.response?.status === 403) {
+        setError(
+          err.response?.data?.message ||
+            "You are not authorized to access the admin dashboard."
+        );
+        return;
+      }
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to load dashboard."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  },
+  []
+);
 
   /* =======================================================
      INITIAL LOAD
