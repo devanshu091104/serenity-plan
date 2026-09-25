@@ -3,7 +3,6 @@ const { testConnection } = require("./src/config/db");
 const {
   verifyEmailConnection,
 } = require("./src/services/email.service");
-
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
