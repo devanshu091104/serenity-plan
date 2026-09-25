@@ -9,11 +9,22 @@ require("dotenv").config();
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT) || 587,
-  secure: Number(process.env.EMAIL_PORT) === 465,
+
+  // Gmail SMTP port 587 uses STARTTLS
+  secure: false,
 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
+  },
+
+  // Prevent SMTP connection from hanging
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+
+  tls: {
+    rejectUnauthorized: true,
   },
 });
 
@@ -25,13 +36,12 @@ const verifyEmailConnection = async () => {
   try {
     await transporter.verify();
 
-    console.log(
-      "Email service connected successfully"
-    );
+    console.log("SMTP SERVER READY");
+    console.log("Email service connected successfully");
   } catch (error) {
     console.error(
-      "Email service connection failed:",
-      error.message
+      "SMTP CONNECTION ERROR:",
+      error
     );
   }
 };
@@ -46,13 +56,14 @@ const sendEmail = async ({
   html,
 }) => {
   try {
-    const info =
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to,
-        subject,
-        html,
-      });
+    const info = await transporter.sendMail({
+      from:
+        process.env.EMAIL_FROM ||
+        `Serenity Plan <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
 
     console.log(
       "Email sent:",
@@ -81,7 +92,9 @@ const sendVerificationOTPEmail = async ({
 }) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from:
+        process.env.EMAIL_FROM ||
+        `Serenity Plan <${process.env.EMAIL_USER}>`,
 
       to: email,
 
@@ -116,21 +129,11 @@ const sendVerificationOTPEmail = async ({
               "
             >
 
-              <h1
-                style="
-                  margin: 0 0 10px;
-                  color: #111827;
-                "
-              >
+              <h1 style="margin: 0 0 10px; color: #111827;">
                 Serenity Plan
               </h1>
 
-              <p
-                style="
-                  color: #6b7280;
-                  font-size: 15px;
-                "
-              >
+              <p style="color: #6b7280; font-size: 15px;">
                 Travel. Explore. Relax.
               </p>
 
@@ -251,7 +254,17 @@ const sendVerificationOTPEmail = async ({
 
     console.log(
       "EMAIL FROM:",
-      process.env.EMAIL_FROM
+      mailOptions.from
+    );
+
+    console.log(
+      "SMTP HOST:",
+      process.env.EMAIL_HOST
+    );
+
+    console.log(
+      "SMTP PORT:",
+      process.env.EMAIL_PORT
     );
 
     const info =
@@ -289,7 +302,9 @@ const sendBookingConfirmationEmail = async ({
 }) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from:
+        process.env.EMAIL_FROM ||
+        `Serenity Plan <${process.env.EMAIL_USER}>`,
 
       to: email,
 
@@ -397,7 +412,7 @@ const sendBookingConfirmationEmail = async ({
 
     console.log(
       "EMAIL FROM:",
-      process.env.EMAIL_FROM
+      mailOptions.from
     );
 
     const info =
@@ -436,7 +451,9 @@ const sendPaymentConfirmationEmail = async ({
 }) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from:
+        process.env.EMAIL_FROM ||
+        `Serenity Plan <${process.env.EMAIL_USER}>`,
 
       to: email,
 
@@ -449,13 +466,11 @@ const sendPaymentConfirmationEmail = async ({
         <html>
 
           <head>
-
             <meta charset="UTF-8" />
 
             <title>
               Payment Successful
             </title>
-
           </head>
 
           <body
@@ -654,10 +669,6 @@ const sendPaymentConfirmationEmail = async ({
       `,
     };
 
-    // =========================
-    // TEMPORARY DEBUG LOGS
-    // =========================
-
     console.log(
       "PAYMENT EMAIL RECIPIENT:",
       email
@@ -665,17 +676,13 @@ const sendPaymentConfirmationEmail = async ({
 
     console.log(
       "EMAIL FROM:",
-      process.env.EMAIL_FROM
+      mailOptions.from
     );
 
     console.log(
       "PAYMENT EMAIL SUBJECT:",
       mailOptions.subject
     );
-
-    // =========================
-    // SEND EMAIL
-    // =========================
 
     const info =
       await transporter.sendMail(
@@ -704,14 +711,9 @@ const sendPaymentConfirmationEmail = async ({
 
 module.exports = {
   transporter,
-
   verifyEmailConnection,
-
   sendEmail,
-
   sendVerificationOTPEmail,
-
   sendBookingConfirmationEmail,
-
   sendPaymentConfirmationEmail,
 };
