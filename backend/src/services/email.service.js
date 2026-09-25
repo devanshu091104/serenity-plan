@@ -10,18 +10,17 @@ const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT) || 587,
 
-  // Gmail SMTP port 587 uses STARTTLS
-  secure: false,
+  // 465 = SSL, 587 = STARTTLS
+  secure: Number(process.env.EMAIL_PORT) === 465,
 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
 
-  // Prevent SMTP connection from hanging
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
 
   tls: {
     rejectUnauthorized: true,
