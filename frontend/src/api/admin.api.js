@@ -1,7 +1,6 @@
 import api from "./axios";
 
 /* DASHBOARD */
-
 export const getAdminDashboard = () => {
   return api.get("/admin/dashboard");
 };
