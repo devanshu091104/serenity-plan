@@ -24,6 +24,7 @@ const adminUserRoutes = require("./routes/admin.user.routes");
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(
   helmet({
