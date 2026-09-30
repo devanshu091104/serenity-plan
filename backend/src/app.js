@@ -3,7 +3,6 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-
 const authRoutes = require("./routes/auth.routes");
 const categoryRoutes = require("./routes/category.routes");
 const destinationRoutes = require("./routes/destination.routes");

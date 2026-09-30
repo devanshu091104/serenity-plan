@@ -22,7 +22,6 @@ import api from "./api/axios";
 
 function App() {
   const navigate = useNavigate();
-
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
 
